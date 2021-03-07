@@ -120,11 +120,11 @@ class EnemyPlane(pygame.sprite.Sprite):
     def enemy_move(self):
         if self.direction == 'right':
             self.rect.right += self.speed
-            if self.rect.right >= 480 - 51:
+            if self.rect.left >= 480 - 51:
                 self.direction = 'left'
         elif self.direction == 'left':
             self.rect.right -= self.speed
-            if self.rect.right <= 0:
+            if self.rect.left <= 0:
                 self.direction = 'right'
 
     def auto_fire(self):
@@ -218,46 +218,65 @@ class Bomb(object):
             self.mVisible = False
 
 
-def main():
-    sound = GameSound()
-    sound.Play_BGM()
+class Manager(object):
+    def __init__(self):
+        # 创建窗口
+        self.screen = pygame.display.set_mode((480, 700), 0, 32)  # 像素，设置模式
+        # 创建背景图片
+        self.background = pygame.image.load("./picture/background.png")  # 加载图片位置， .为当前目录
+        # 初始化一个装玩家精灵的Group
+        self.players = pygame.sprite.Group()
+        # 初始化一个装敌机精灵的Group
+        self.enemies = pygame.sprite.Group()
+        # 初始化玩家爆炸对象
+        self.players_bomb = Bomb(self.screen, 'player')
+        # 初始化敌机爆炸对象
+        self.enemies_bomb = Bomb(self.screen, 'enemy')
+        # 初始化声音播放对象
+        self.sound = GameSound()
 
-    # 1、创建一个窗口
-    screen = pygame.display.set_mode((480, 700), 0, 32)  # 像素，设置模式
-    # 2、拿一个图片当背景
-    background = pygame.image.load("./picture/background.png")  # 加载图片位置， .为当前目录
+    def exit(self):
+        print("退出")
+        pygame.quit()
+        exit()
 
-    player = PlayerPlane(screen)
-    enemy1 = EnemyPlane(screen)
+    def new_player(self):
+        # 创建飞机对象 添加到玩家的组
+        player = PlayerPlane(self.screen)
+        self.players.add(player)
 
-    while True:  # 让显示窗口陷入死循环，保证窗口一直显示
+    def new_enemy(self):
+        # 创建敌机对象 添加到敌机的组
+        enemy = EnemyPlane(self.screen)
+        self.enemies.add(enemy)
 
-        # 3、将图片贴到背景中
-        screen.blit(background, (0, 0))  # 两个参数， 第一个是图片，第二个是坐标，以左上为原点
+    def main(self):
+        # 播放背景音乐
+        self.sound.Play_BGM()
+        # 创建一个玩家
+        self.new_player()
+        # 创建一个敌机
+        self.new_enemy()
 
-        # 获取事件，防止程序进入卡死状态
-        # pygame.event.get()
-        # 列表，用循环来判断事件
-        for event in pygame.event.get():
-            # 判断事件类型
-            if event.type == QUIT:  # 程序退出
-                pygame.quit()
-                # 退出python程序
-                exit()
+        while True:
+            self.screen.blit(self.background, (0, 0))  # 两个参数， 第一个是图片，第二个是坐标，以左上为原点
 
-        # 执行飞机的按键监听
-        player.key_control()
-        # 显示飞机
-        player.display()
+            # 列表，用循环来判断事件
+            for event in pygame.event.get():
+                # 判断事件类型
+                if event.type == QUIT:  # 程序退出
+                    self.exit()
 
-        enemy1.display()
-        enemy1.enemy_move()
-        enemy1.auto_fire()
+            # 玩家飞机和子弹显示
+            self.players.update()
+            # 敌人飞机和子弹显示
+            self.enemies.update()
 
-        # 4、显示窗口中的内容
-        pygame.display.update()
-        time.sleep(0.01)  # 让循环停留0.01秒，防止执行过快，同时也防止cpu消耗
+            # 刷新窗口内容
+            pygame.display.update()
+            time.sleep(0.01)
 
 
 if __name__ == '__main__':
-    main()
+    manager = Manager()
+    manager.main()
